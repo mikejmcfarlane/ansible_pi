@@ -1,0 +1,35 @@
+---
+# tasks file for roles/common/new_pi_setup
+
+- name: Transfer public ssh key to remote
+  authorized_key:
+    user: pi
+    state: present
+    key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+- name: Change password
+  user:
+    name: pi
+    password: "{{ new_pi_password }}"
+    update_password: always
+
+- name: Update OS
+  apt:
+    name: "*"
+    state: latest
+
+# - name: Set hostname, as defined in inventory var
+#   hostname:
+#     name: "{{ new_hostname }}"
+
+- name: Set hostname, as defined in inventory var
+  lineinfile:
+    dest: /etc/hostname
+    regexp: 'raspberrypi'
+    line: "{{ new_hostname }}"
+    state: present
+
+- name: Reboot
+  reboot:
+  
+

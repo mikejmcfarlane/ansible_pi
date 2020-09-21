@@ -1,0 +1,9 @@
+---
+
+# Setup a new Pi. To be run only once.
+
+- hosts: all
+  user: pi
+  become: yes
+  roles:
+    - new_pi_setup
