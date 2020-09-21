@@ -36,11 +36,11 @@ Add the host key to your local `known_hosts` file:
 ssh-keyscan -H <IP OF PI> >> ~/.ssh/known_hosts
 ```
 
-Add the IP to the `hosts` inventory file and test it:
+Add the IP, and a hostname, to the `hosts` inventory file in the `new` group, and test it:
 
 ```
 export ANSIBLE_HOST_KEY_CHECKING=False=False
-ansible -i hosts all -u pi -m ping --ask-pass
+ansible -i new all -u pi -m ping --ask-pass
 unset ANSIBLE_HOST_KEY_CHECKING
 ```
 
@@ -49,6 +49,15 @@ unset ANSIBLE_HOST_KEY_CHECKING
 
 ```bash
 export NEW_PI_PASSWORD=$(python3 -c 'import crypt; print(crypt.crypt("<YOUR NEW PASSWORD>", crypt.mksalt(crypt.METHOD_SHA512)))')
-ansible-playbook -i hosts new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD" --check
-ansible-playbook -i hosts new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD"
+ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD" --list-hosts
+ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD" --list-tasks
+ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD"
+```
+
+In `hosts` file now move all IPs from `new` to `current`.
+
+And test reachable:
+
+```bash
+ansible -i hosts all -u pi -m ping
 ```

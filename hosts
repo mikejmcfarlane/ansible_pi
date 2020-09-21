@@ -1,1 +1,7 @@
+[current]
 192.168.1.184 new_hostname=ev3dev-pi03
+192.168.1.121 new_hostname=ev3dev-pi04
+192.168.1.193 new_hostname=ev3dev-pi05
+192.168.1.141 new_hostname=ev3dev-pi06
+
+[new]
