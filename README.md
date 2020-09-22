@@ -4,6 +4,16 @@ Playbooks for managing a Raspberry Pi4 cluster using Ansible.
 
 Assumes Ansible run in a docker container, along with other tools such as `nmap`.
 
+- [Ansible Pi](#ansible-pi)
+  - [Setup](#setup)
+    - [Create a microSD card with Raspbian - Mac](#create-a-microsd-card-with-raspbian---mac)
+    - [Get the IP](#get-the-ip)
+    - [Setup new Pi](#setup-new-pi)
+    - [Setup PXE boot](#setup-pxe-boot)
+      - [Pre-requisites](#pre-requisites)
+      - [Test on a single host](#test-on-a-single-host)
+      - [Run on all nodes](#run-on-all-nodes)
+
 ## Setup
 
 ### Create a microSD card with Raspbian - Mac
@@ -61,3 +71,36 @@ And test reachable:
 ```bash
 ansible -i hosts all -u pi -m ping
 ```
+
+### Setup PXE boot
+
+Based on [PXE boot a Raspberry Pi 4 from a Synology Diskstation and compare performance to microSD](https://mikejmcfarlane.github.io/blog/2020/09/12/PXE-boot-raspberry-pi-4-from-synology-diskstation#setting-up-the-raspberry-pi-to-pxe-boot)
+
+#### Pre-requisites
+
++ The `new_hostname` dir for each new Pi needs to exists on the Synology. And should be empty.
++ The `rpi-tftpboot` dir needs to exists on the Synology. And any previous Pi serial number dirs deleted.
+
+#### Test on a single host
+
+```bash
+ansible-playbook -i hosts -l 192.168.1.184 pxe_boot_setup.yml --list-hosts
+ansible-playbook -i hosts -l 192.168.1.184 pxe_boot_setup.yml
+```
+
+#### Run on all nodes
+
+```bash
+ansible-playbook -i hosts pxe_boot_setup.yml --list-hosts
+ansible-playbook -i hosts pxe_boot_setup.yml
+```
+
+nb had some issues with running against multiple nodes, the bootconf.txt file was empty, so had to run the playbook individually against each failed node.
+
+Shutdown all nodes, remove microSD cards, power on and wait a min or two, then test connectivity with:
+
+```bash
+ansible -i hosts all -u pi -m ping
+```
+
+If this fails, checkout [PXE boot a Raspberry Pi 4 from a Synology Diskstation and compare performance to microSD](https://mikejmcfarlane.github.io/blog/2020/09/12/PXE-boot-raspberry-pi-4-from-synology-diskstation#setting-up-the-raspberry-pi-to-pxe-boot)

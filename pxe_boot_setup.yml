@@ -1,0 +1,9 @@
+---
+
+# Setup PXE boot on a new Pi
+
+- hosts: all
+  user: pi
+  become: yes
+  roles:
+    - setup_pxe_boot

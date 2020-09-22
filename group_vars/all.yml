@@ -1,0 +1,6 @@
+---
+
+# Variables for the whole Pi cluster
+
+diskstation_ip: 192.168.1.191
+eeprom_working_dir: "/home/pi/tmp_pxe"

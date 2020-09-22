@@ -1,0 +1,122 @@
+---
+# tasks file for roles/setup_pxe_boot
+
+# - name: Install NFS libraries
+#   apt:
+#     name: nfs-common
+#     state: latest
+
+# - name: Make NFS mount point 1
+#   file:
+#     path: "/nfs/{{ new_hostname }}"
+#     state: directory
+#     mode: '0755'
+
+# # The `new_hostname` dir needs to exists on the Synology
+# - name: Mount NFS rpi-pxe
+#   mount:
+#     path: "/nfs/{{ new_hostname }}"
+#     src: "{{ diskstation_ip }}:/volume1/rpi-pxe/{{ new_hostname }}"
+#     fstype: nfs
+#     state: mounted
+
+# - name: Copy OS files to rpi-pxe
+#   synchronize:
+#     src: "/"
+#     dest: "/nfs/{{ new_hostname }}"
+#     rsync_opts: 
+#       - "-xa"
+#       - "--exclude=/nfs"
+#     recursive: yes
+#   delegate_to: "{{ inventory_hostname }}"
+
+# - name: Make NFS mount point 2
+#   file:
+#     path: "/nfs/rpi-tftpboot"
+#     state: directory
+#     mode: '0755'
+
+# # The `rpi-tftpboot` dir needs to exists on the Synology
+# - name: Mount NFS rpi-tftpboot
+#   mount:
+#     path: "/nfs/rpi-tftpboot"
+#     src: "{{ diskstation_ip }}:/volume1/rpi-tftpboot/"
+#     fstype: nfs
+#     state: mounted
+
+- name: Get Pi serial number
+  shell: 'vcgencmd otp_dump | grep 28: | sed s/.*://g'
+  register: pi_serial_number
+
+- name: Make directory for boot files based on serial number
+  file:
+    path: "/nfs/rpi-tftpboot/{{ pi_serial_number.stdout }}"
+    state: directory
+    mode: '0755'
+
+# The Synology needs the boot files in the root of the rpi-tftpboot to see them in PXE setup,
+# but with multiple Pis to PXE boot, we need seperate boot dir for each Pi.
+# TODO: playbook fails with synchronize and copy modules, fix
+- name: Copy boot files to rpi-tftpboot - workaround for Synology
+  shell: "cp -r /boot/* /nfs/rpi-tftpboot/"
+
+- name: Copy boot files to rpi-tftpboot - for Pi boot
+  synchronize:
+    src: "/boot/"
+    dest: "/nfs/rpi-tftpboot/{{ pi_serial_number.stdout }}"
+    rsync_opts: 
+      - "-xa"
+      - "--exclude=/nfs"
+    recursive: yes
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Update fstab for PXE boot
+  template:
+    src: templates/fstab.j2
+    dest: "/nfs/{{ new_hostname }}/etc/fstab"
+
+- name: Update cmdline.txt for PXE boot
+  template:
+    src: templates/cmdline.txt.j2
+    dest: "/nfs/rpi-tftpboot/{{ pi_serial_number.stdout }}/cmdline.txt"
+
+- name: Install eeprom libraries
+  apt:
+    name: rpi-eeprom
+    state: latest
+
+- name: Remove any previous working directory
+  file:
+    path: "{{ eeprom_working_dir }}"
+    state: absent
+
+- name: Make working directory for eeprom config
+  file:
+    path: "{{ eeprom_working_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy the eeprom binary file to working directory
+  copy:
+    src: "/lib/firmware/raspberrypi/bootloader/stable/pieeprom-2020-07-31.bin"
+    dest: "{{ eeprom_working_dir }}/pieeprom.bin"
+    remote_src: yes
+
+- name: Copy in the bootconf template
+  template:
+    src: templates/bootconf.txt.j2
+    dest: "{{ eeprom_working_dir }}/bootconf.txt"
+
+- name: Create new eeprom binary from bootconf
+  command: "rpi-eeprom-config --out pieeprom-new.bin --config bootconf.txt pieeprom.bin"
+  args:
+    chdir: "{{ eeprom_working_dir }}"
+
+- name: Write new eeprom binary to the eeprom
+  command: "rpi-eeprom-update -d -f ./pieeprom-new.bin"
+  args:
+    chdir: "{{ eeprom_working_dir }}"
+
+- debug:
+    msg: "Now shutdown, remove microSD card, and reboot"
+

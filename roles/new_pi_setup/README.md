@@ -1,5 +1,5 @@
 new_pi_setup
-=========
+============
 
 Role to setup a new Pi - ssh keys, update, hostname.
 
