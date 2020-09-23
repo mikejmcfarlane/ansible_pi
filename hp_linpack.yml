@@ -1,0 +1,9 @@
+---
+
+# Setup HPL - High Performance Linpack on a Raspberry Pi cluster
+
+- hosts: all
+  user: pi
+  become: yes
+  roles:
+    - hpl

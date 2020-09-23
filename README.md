@@ -5,16 +5,18 @@ Playbooks for managing a Raspberry Pi4 cluster using Ansible.
 Assumes Ansible run in a docker container, along with other tools such as `nmap`.
 
 - [Ansible Pi](#ansible-pi)
-  - [Setup](#setup)
+  - [Setup a new Pi](#setup-a-new-pi)
     - [Create a microSD card with Raspbian - Mac](#create-a-microsd-card-with-raspbian---mac)
     - [Get the IP](#get-the-ip)
-    - [Setup new Pi](#setup-new-pi)
-    - [Setup PXE boot](#setup-pxe-boot)
-      - [Pre-requisites](#pre-requisites)
-      - [Test on a single host](#test-on-a-single-host)
-      - [Run on all nodes](#run-on-all-nodes)
+    - [Configure new Pi](#configure-new-pi)
+  - [Setup PXE boot](#setup-pxe-boot)
+    - [Pre-requisites](#pre-requisites)
+    - [Test on a single host](#test-on-a-single-host)
+    - [Run on all nodes](#run-on-all-nodes)
+  - [High Performance Linpack](#high-performance-linpack)
+    - [Test on a single host](#test-on-a-single-host-1)
 
-## Setup
+## Setup a new Pi
 
 ### Create a microSD card with Raspbian - Mac
 
@@ -30,6 +32,8 @@ sudo dd bs=1m if=2020-08-20-raspios-buster-armhf-lite.img of=/dev/rdisk4; sync
 touch /Volumes/boot/ssh
 sudo diskutil eject /dev/rdisk4
 ```
+
+Boot the Pi from the microSD card.
 
 ### Get the IP
 
@@ -55,12 +59,12 @@ unset ANSIBLE_HOST_KEY_CHECKING
 ```
 
 
-### Setup new Pi
+### Configure new Pi
 
 ```bash
 export NEW_PI_PASSWORD=$(python3 -c 'import crypt; print(crypt.crypt("<YOUR NEW PASSWORD>", crypt.mksalt(crypt.METHOD_SHA512)))')
 ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD" --list-hosts
-ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD" --list-tasks
+ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD" --check
 ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD"
 ```
 
@@ -72,23 +76,23 @@ And test reachable:
 ansible -i hosts all -u pi -m ping
 ```
 
-### Setup PXE boot
+## Setup PXE boot
 
 Based on [PXE boot a Raspberry Pi 4 from a Synology Diskstation and compare performance to microSD](https://mikejmcfarlane.github.io/blog/2020/09/12/PXE-boot-raspberry-pi-4-from-synology-diskstation#setting-up-the-raspberry-pi-to-pxe-boot)
 
-#### Pre-requisites
+### Pre-requisites
 
 + The `new_hostname` dir for each new Pi needs to exists on the Synology. And should be empty.
 + The `rpi-tftpboot` dir needs to exists on the Synology. And any previous Pi serial number dirs deleted.
 
-#### Test on a single host
+### Test on a single host
 
 ```bash
-ansible-playbook -i hosts -l 192.168.1.184 pxe_boot_setup.yml --list-hosts
+ansible-playbook -i hosts -l 192.168.1.184 pxe_boot_setup.yml --check
 ansible-playbook -i hosts -l 192.168.1.184 pxe_boot_setup.yml
 ```
 
-#### Run on all nodes
+### Run on all nodes
 
 ```bash
 ansible-playbook -i hosts pxe_boot_setup.yml --list-hosts
@@ -104,3 +108,16 @@ ansible -i hosts all -u pi -m ping
 ```
 
 If this fails, checkout [PXE boot a Raspberry Pi 4 from a Synology Diskstation and compare performance to microSD](https://mikejmcfarlane.github.io/blog/2020/09/12/PXE-boot-raspberry-pi-4-from-synology-diskstation#setting-up-the-raspberry-pi-to-pxe-boot)
+
+
+## High Performance Linpack
+
+Based on [High Performance Linpack for my Raspberry Pi supercomputer](https://mikejmcfarlane.github.io/blog/2020/09/17/High-Performance-Linpack-for-raspberry-pi-supercomputer) but I'm removed the custom _make_ of MPI and ATLAS to simplify the MVP automation. For more performance build ATLAS and MPI from source code.
+
+### Test on a single host
+
+```bash
+ansible-playbook -i hosts -l 192.168.1.184 hp_linpack.yml --check
+ansible-playbook -i hosts -l 192.168.1.184 hp_linpack.yml
+```
+

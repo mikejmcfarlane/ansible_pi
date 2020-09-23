@@ -18,6 +18,12 @@
     name: "*"
     state: latest
 
+- name: Install any packages needed in all builds
+  apt:
+    pkg:
+    - vim
+  state: latest
+
 # - name: Set hostname, as defined in inventory var
 #   hostname:
 #     name: "{{ new_hostname }}"

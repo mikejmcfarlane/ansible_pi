@@ -1,0 +1,79 @@
+---
+# tasks file for roles/hpl
+
+- name: Install MPI, ATLAS and required dependencies
+  apt:
+    pkg:
+    - automake
+    - gfortran
+    - mpich
+    state: latest
+
+- name: Disable CPU throttling - lasts until reboot
+  shell: "echo performance | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
+
+- name: get ATLAS pre-built - make directory for repo
+  file:
+    name: "{{ atlas_working_dir }}"
+    state: directory
+    mode: '0755'
+    owner: pi
+    group: pi
+
+- name: get ATLAS pre-built - clone repo to dir
+  git:
+    repo: git@github.com:mikejmcfarlane/atlas_pi.git
+    dest: "{{ atlas_working_dir }}"
+
+- name: Make a working directly for HPL
+  file:
+    name: "{{ hpl_working_dir }}"
+    state: directory
+    mode: '0755'
+    owner: pi
+    group: pi
+
+- name: Get HPL source code
+  get_url:
+    url: "{{ hpl_download_url }}{{ hpl_file_version }}{{ hpl_file_extension }}"
+    dest: "{{ hpl_working_dir }}"
+
+- name: Untar hpl file
+  unarchive:
+    src: "{{ hpl_working_dir }}/{{ hpl_file_version }}{{ hpl_file_extension }}"
+    dest: "{{ hpl_working_dir }}"
+    remote_src: yes
+  become_user: pi
+
+- name: Setup for make
+  command: "sh make_generic"
+  args:
+    chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}/setup"
+  become_user: pi
+
+- name: Copy in Make.rpi
+  template:
+    src: templates/Make.rpi.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/Make.rpi"
+  become_user: pi
+
+# - name: Make HPL
+#   make:
+#     chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}"
+#     params:
+#       arch: rpi
+#   become_user: pi
+
+# - name: Test single node
+#   command: "mpirun -np 4 ./xhpl"
+#   args:
+#     chdir: "{{ atlas_working_dir }}/atlas-build/bin/rpi"
+
+# - name: Add all nodes in cluster to trusted hosts
+
+# - name: add HPL.data
+
+# - name: add nodes-4pi
+
+- debug:
+    msg: "If reboot/shutdown, then need to repeat disable CPU throttle"

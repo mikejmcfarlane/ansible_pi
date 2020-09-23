@@ -2,5 +2,15 @@
 
 # Variables for the whole Pi cluster
 
+# PXE boot
 diskstation_ip: 192.168.1.191
 eeprom_working_dir: "/home/pi/tmp_pxe"
+
+# ATLAS
+atlas_working_dir: "/home/pi/tmp_atlas"
+
+# HPL
+hpl_working_dir: "/home/pi/tmp_hpl"
+hpl_download_url: "http://www.netlib.org/benchmark/hpl/"
+hpl_file_version: "hpl-2.3"
+hpl_file_extension: ".tar.gz"
