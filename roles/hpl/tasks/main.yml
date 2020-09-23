@@ -7,12 +7,13 @@
     - automake
     - gfortran
     - mpich
+    - git
     state: latest
 
 - name: Disable CPU throttling - lasts until reboot
   shell: "echo performance | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
 
-- name: get ATLAS pre-built - make directory for repo
+- name: Get ATLAS pre-built - make directory for repo
   file:
     name: "{{ atlas_working_dir }}"
     state: directory
@@ -20,9 +21,13 @@
     owner: pi
     group: pi
 
-- name: get ATLAS pre-built - clone repo to dir
+- name: Add github to known_hosts
+  shell: "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
+  become_user: pi
+
+- name: Get ATLAS pre-built - clone repo to dir
   git:
-    repo: git@github.com:mikejmcfarlane/atlas_pi.git
+    repo: https://github.com/mikejmcfarlane/atlas_pi.git
     dest: "{{ atlas_working_dir }}"
 
 - name: Make a working directly for HPL
@@ -64,16 +69,31 @@
 #       arch: rpi
 #   become_user: pi
 
-# - name: Test single node
-#   command: "mpirun -np 4 ./xhpl"
-#   args:
-#     chdir: "{{ atlas_working_dir }}/atlas-build/bin/rpi"
+- name: Add all nodes in cluster to trusted hosts
+  shell: "ssh-keyscan -H {{ item }} >> ~/.ssh/known_hosts"
+  with_inventory_hostnames:
+    - current
+  become_user: pi
 
-# - name: Add all nodes in cluster to trusted hosts
+- name: Add HPL.dat
+  template:
+    src: templates/HPL.dat.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat"
+  become_user: pi
 
-# - name: add HPL.data
+- name: Add nodes-Xpi
+  vars:
+    node_list: "{{ groups['current'] }}"
+  template:
+    src: templates/nodes-Xpi.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/nodes-Xpi"
+  become_user: pi
 
-# - name: add nodes-4pi
+- debug:
+    msg: "To test 1 nodes cd {{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/; mpirun -np 4 ./xhpl"
+
+  - debug:
+    msg: "To run 4 nodes: cd {{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/; mpiexec -f nodes-Xpi ./xhpl"
 
 - debug:
     msg: "If reboot/shutdown, then need to repeat disable CPU throttle"
