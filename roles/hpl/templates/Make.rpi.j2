@@ -81,9 +81,9 @@ HPLlib       = $(LIBdir)/libhpl.a
 # header files,  MPlib  is defined  to be the name of  the library to be 
 # used. The variable MPdir is only used for defining MPinc and MPlib.
 #
-MPdir        = /usr/local
-MPinc        = -I /usr/lib/arm-linux-gnueabihf/mpich/include
-MPlib        = /usr/lib/arm-linux-gnueabihf/libmpich.so
+MPdir        = /usr/local 
+MPinc        = -I /usr/local/include
+MPlib        = /usr/local/lib/libmpich.so
 #
 # ----------------------------------------------------------------------
 # - Linear Algebra library (BLAS or VSIPL) -----------------------------
@@ -92,9 +92,9 @@ MPlib        = /usr/lib/arm-linux-gnueabihf/libmpich.so
 # header files,  LAlib  is defined  to be the name of  the library to be 
 # used. The variable LAdir is only used for defining LAinc and LAlib.
 #
-LAdir        = {{ atlas_working_dir }}/atlas_pi/atlas-build
+LAdir        = /usr/lib/arm-linux-gnueabihf/
 LAinc        = 
-LAlib        = $(LAdir)/lib/libf77blas.a $(LAdir)/lib/libatlas.a
+LAlib        = $(LAdir)/libf77blas.a $(LAdir)/libatlas.a
 #
 # ----------------------------------------------------------------------
 # - F77 / C interface --------------------------------------------------

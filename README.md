@@ -1,6 +1,6 @@
 # Ansible Pi
 
-Playbooks for managing a Raspberry Pi4 cluster using Ansible. 
+Playbooks for managing a Raspberry Pi 4 cluster using Ansible. 
 
 Assumes Ansible run in a docker container, along with other tools such as `nmap`.
 
@@ -15,6 +15,7 @@ Assumes Ansible run in a docker container, along with other tools such as `nmap`
     - [Run on all nodes](#run-on-all-nodes)
   - [High Performance Linpack](#high-performance-linpack)
     - [Test on a single host](#test-on-a-single-host-1)
+    - [Build on 4 nodes](#build-on-4-nodes)
 
 ## Setup a new Pi
 
@@ -112,7 +113,9 @@ If this fails, checkout [PXE boot a Raspberry Pi 4 from a Synology Diskstation a
 
 ## High Performance Linpack
 
-Based on [High Performance Linpack for my Raspberry Pi supercomputer](https://mikejmcfarlane.github.io/blog/2020/09/17/High-Performance-Linpack-for-raspberry-pi-supercomputer) but I'm removed the custom _make_ of MPI and ATLAS to simplify the MVP automation. For more performance build ATLAS and MPI from source code.
+Based on [High Performance Linpack for my Raspberry Pi supercomputer](https://mikejmcfarlane.github.io/blog/2020/09/17/High-Performance-Linpack-for-raspberry-pi-supercomputer) but I'm removed the custom _make_ of ATLAS to simplify the MVP automation. For more performance build ATLAS source code.
+
+*Some changes to the code will be required if not 4 nodes, requires more automation.*
 
 ### Test on a single host
 
@@ -121,3 +124,9 @@ ansible-playbook -i hosts -l 192.168.1.184 hp_linpack.yml --check
 ansible-playbook -i hosts -l 192.168.1.184 hp_linpack.yml
 ```
 
+### Build on 4 nodes
+
+```bash
+ansible-playbook -i hosts hp_linpack.yml --check
+ansible-playbook -i hosts hp_linpack.yml
+```

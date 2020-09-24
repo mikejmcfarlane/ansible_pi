@@ -6,29 +6,74 @@
     pkg:
     - automake
     - gfortran
-    - mpich
     - git
+    - libatlas-base-dev
     state: latest
 
 - name: Disable CPU throttling - lasts until reboot
   shell: "echo performance | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
 
-- name: Get ATLAS pre-built - make directory for repo
+# Using the repo MPI libs resulted in segmentation faults when running HPL.
+# So building MPI from source.
+- name: Make a working directly for MPI
   file:
-    name: "{{ atlas_working_dir }}"
+    name: "{{ mpi_working_dir }}"
     state: directory
     mode: '0755'
     owner: pi
     group: pi
 
-- name: Add github to known_hosts
-  shell: "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
+- name: Get MPI source code
+  get_url:
+    url: "{{ mpi_download_url }}/{{ mpi_file_version }}/mpich-{{ mpi_file_version }}{{ mpi_file_extension }}"
+    dest: "{{ mpi_working_dir }}"
+
+- name: Untar MPI file
+  unarchive:
+    src: "{{ mpi_working_dir }}/mpich-{{ mpi_file_version }}{{ mpi_file_extension }}"
+    dest: "{{ mpi_working_dir }}"
+    remote_src: yes
   become_user: pi
 
-- name: Get ATLAS pre-built - clone repo to dir
-  git:
-    repo: https://github.com/mikejmcfarlane/atlas_pi.git
-    dest: "{{ atlas_working_dir }}"
+# ch4 device is a newer communications protocol. In theory should have some advantages here, but takes a lot longer to build.
+# Switch to ch3 for a faster build. ./configure --with-device=ch3:sock
+- name: Setup for MPI make
+  command: "./configure --with-device=ch4:ofi"
+  args:
+    chdir: "{{ mpi_working_dir }}/mpich-{{ mpi_file_version }}"
+  become_user: pi
+
+- name: Make MPI
+  make:
+    chdir: "{{ mpi_working_dir }}/mpich-{{ mpi_file_version }}"
+    params:
+      NUM_THREADS: 4
+  become_user: pi
+
+- name: Make install MPI
+  make:
+    chdir: "{{ mpi_working_dir }}/mpich-{{ mpi_file_version }}"
+    target: install
+
+# The repo ATLAS works ok. If not working, or not performant, then build once, store centrally, 
+# and pull from a store e.g. github or a file/object store.
+# - name: Get ATLAS pre-built - make directory for repo
+#   file:
+#     name: "{{ atlas_working_dir }}"
+#     state: directory
+#     mode: '0755'
+#     owner: pi
+#     group: pi
+
+# - name: Add github to known_hosts
+#   shell: "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
+#   become_user: pi
+
+# - name: Get ATLAS pre-built - clone repo to dir
+#   git:
+#     repo: <REPO>
+#     dest: "{{ atlas_working_dir }}"
+#   become_user: pi
 
 - name: Make a working directly for HPL
   file:
@@ -50,7 +95,7 @@
     remote_src: yes
   become_user: pi
 
-- name: Setup for make
+- name: Setup for HPL make
   command: "sh make_generic"
   args:
     chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}/setup"
@@ -62,12 +107,12 @@
     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/Make.rpi"
   become_user: pi
 
-# - name: Make HPL
-#   make:
-#     chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}"
-#     params:
-#       arch: rpi
-#   become_user: pi
+- name: Make HPL
+  make:
+    chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}"
+    params:
+      arch: rpi
+  become_user: pi
 
 - name: Add all nodes in cluster to trusted hosts
   shell: "ssh-keyscan -H {{ item }} >> ~/.ssh/known_hosts"
@@ -75,10 +120,17 @@
     - current
   become_user: pi
 
-- name: Add HPL.dat
+- name: Backup original HPL.data
+  copy:
+    src: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat"
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.ori"
+    remote_src: yes
+  become_user: pi
+
+- name: Add HPL.dat as a new copy
   template:
     src: templates/HPL.dat.j2
-    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat"
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.new"
   become_user: pi
 
 - name: Add nodes-Xpi
@@ -92,7 +144,7 @@
 - debug:
     msg: "To test 1 nodes cd {{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/; mpirun -np 4 ./xhpl"
 
-  - debug:
+- debug:
     msg: "To run 4 nodes: cd {{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/; mpiexec -f nodes-Xpi ./xhpl"
 
 - debug:

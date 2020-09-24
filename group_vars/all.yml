@@ -6,6 +6,12 @@
 diskstation_ip: 192.168.1.191
 eeprom_working_dir: "/home/pi/tmp_pxe"
 
+# MPI
+mpi_working_dir: "/home/pi/tmp_mpi"
+mpi_download_url: "https://www.mpich.org/static/downloads/"
+mpi_file_version: "3.4a3"
+mpi_file_extension: ".tar.gz"
+
 # ATLAS
 atlas_working_dir: "/home/pi/tmp_atlas"
 
