@@ -37,11 +37,15 @@
 
 # ch4 device is a newer communications protocol. In theory should have some advantages here, but takes a lot longer to build.
 # Switch to ch3 for a faster build. ./configure --with-device=ch3:sock
+# Long running make jobs disconnect - verbose shows 'sftp transfer mechanism failed'. Maybe docker related?
+# So using async mode, will keep trying for 1200sec (20min) every 60s
 - name: Setup for MPI make
   command: "./configure --with-device=ch4:ofi"
   args:
     chdir: "{{ mpi_working_dir }}/mpich-{{ mpi_file_version }}"
   become_user: pi
+  async: 1200
+  poll: 60
 
 - name: Make MPI
   make:
@@ -49,11 +53,15 @@
     params:
       NUM_THREADS: 4
   become_user: pi
+  async: 7200
+  poll: 60
 
 - name: Make install MPI
   make:
     chdir: "{{ mpi_working_dir }}/mpich-{{ mpi_file_version }}"
     target: install
+  async: 3600
+  poll: 60
 
 # The repo ATLAS works ok. If not working, or not performant, then build once, store centrally, 
 # and pull from a store e.g. github or a file/object store.
@@ -113,6 +121,8 @@
     params:
       arch: rpi
   become_user: pi
+  async: 7200
+  poll: 60
 
 - name: Add all nodes in cluster to trusted hosts
   shell: "ssh-keyscan -H {{ item }} >> ~/.ssh/known_hosts"
