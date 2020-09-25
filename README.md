@@ -130,3 +130,9 @@ ansible-playbook -i hosts -l 192.168.1.184 hp_linpack.yml
 ansible-playbook -i hosts hp_linpack.yml --check
 ansible-playbook -i hosts hp_linpack.yml
 ```
+
+or, if already built on one Pi
+
+```bash
+ansible-playbook -i hosts -l 'all:!192.168.1.184' hp_linpack.yml
+```

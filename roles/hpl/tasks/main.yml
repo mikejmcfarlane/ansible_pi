@@ -130,6 +130,35 @@
     - current
   become_user: pi
 
+- name: Generate a new ssh key pair on each node
+  openssh_keypair:
+    path: /home/pi/.ssh/id_rsa
+  become_user: pi
+
+- name: Fetch the keyfile from the node to master
+  fetch: 
+    src: "/home/pi/.ssh/id_rsa.pub"
+    dest: "group_vars/{{inventory_hostname}}-id_rsa.pub"
+    flat: yes
+
+- name: Copy the key add to authorized_keys using Ansible module
+  authorized_key:
+    user: pi
+    state: present
+    key: "{{ lookup('file','group_vars/{{item}}-id_rsa.pub')}}"
+  when: "{{ item != inventory_hostname }}"
+  with_items: 
+    - "{{ groups['current'] }}"
+
+- name: Delete pub files from local
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_fileglob:
+    - group_vars/*.pub
+  delegate_to: localhost
+
+
 - name: Backup original HPL.data
   copy:
     src: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat"
