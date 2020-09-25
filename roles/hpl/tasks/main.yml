@@ -158,7 +158,6 @@
     - group_vars/*.pub
   delegate_to: localhost
 
-
 - name: Backup original HPL.data
   copy:
     src: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat"
