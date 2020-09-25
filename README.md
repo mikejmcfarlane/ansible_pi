@@ -136,3 +136,9 @@ or, if already built on one Pi
 ```bash
 ansible-playbook -i hosts -l 'all:!192.168.1.184' hp_linpack.yml
 ```
+
+To reset performance mode:
+
+```bash
+ansible -i hosts all -u pi -m shell -a "echo performance | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
+```

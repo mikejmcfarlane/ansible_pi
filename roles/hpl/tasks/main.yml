@@ -36,11 +36,12 @@
   become_user: pi
 
 # ch4 device is a newer communications protocol. In theory should have some advantages here, but takes a lot longer to build.
-# Switch to ch3 for a faster build. ./configure --with-device=ch3:sock
+# Switch to ch3 for a faster build but slower performance.
 # Long running make jobs disconnect - verbose shows 'sftp transfer mechanism failed'. Maybe docker related?
 # So using async mode, will keep trying for 1200sec (20min) every 60s
 - name: Setup for MPI make
   command: "./configure --with-device=ch4:ofi"
+  # command: "./configure --with-device=ch3"
   args:
     chdir: "{{ mpi_working_dir }}/mpich-{{ mpi_file_version }}"
   become_user: pi
@@ -63,27 +64,27 @@
   async: 3600
   poll: 60
 
-# The repo ATLAS works ok. If not working, or not performant, then build once, store centrally, 
-# and pull from a store e.g. github or a file/object store.
-# - name: Get ATLAS pre-built - make directory for repo
-#   file:
-#     name: "{{ atlas_working_dir }}"
-#     state: directory
-#     mode: '0755'
-#     owner: pi
-#     group: pi
+# # The repo ATLAS works ok. If not working, or not performant, then build once, store centrally, 
+# # and pull from a store e.g. github or a file/object store.
+# # - name: Get ATLAS pre-built - make directory for repo
+# #   file:
+# #     name: "{{ atlas_working_dir }}"
+# #     state: directory
+# #     mode: '0755'
+# #     owner: pi
+# #     group: pi
 
-# - name: Add github to known_hosts
-#   shell: "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
-#   become_user: pi
+# # - name: Add github to known_hosts
+# #   shell: "ssh-keyscan -H github.com >> ~/.ssh/known_hosts"
+# #   become_user: pi
 
-# - name: Get ATLAS pre-built - clone repo to dir
-#   git:
-#     repo: <REPO>
-#     dest: "{{ atlas_working_dir }}"
-#   become_user: pi
+# # - name: Get ATLAS pre-built - clone repo to dir
+# #   git:
+# #     repo: <REPO>
+# #     dest: "{{ atlas_working_dir }}"
+# #   become_user: pi
 
-- name: Make a working directly for HPL
+- name: Make a working directory for HPL
   file:
     name: "{{ hpl_working_dir }}"
     state: directory
@@ -124,39 +125,39 @@
   async: 7200
   poll: 60
 
-- name: Add all nodes in cluster to trusted hosts
-  shell: "ssh-keyscan -H {{ item }} >> ~/.ssh/known_hosts"
-  with_inventory_hostnames:
-    - current
-  become_user: pi
+# - name: Add all nodes in cluster to trusted hosts
+#   shell: "ssh-keyscan -H {{ item }} >> ~/.ssh/known_hosts"
+#   with_inventory_hostnames:
+#     - current
+#   become_user: pi
 
-- name: Generate a new ssh key pair on each node
-  openssh_keypair:
-    path: /home/pi/.ssh/id_rsa
-  become_user: pi
+# - name: Generate a new ssh key pair on each node
+#   openssh_keypair:
+#     path: /home/pi/.ssh/id_rsa
+#   become_user: pi
 
-- name: Fetch the keyfile from the node to master
-  fetch: 
-    src: "/home/pi/.ssh/id_rsa.pub"
-    dest: "group_vars/{{inventory_hostname}}-id_rsa.pub"
-    flat: yes
+# - name: Fetch the keyfile from the node to master
+#   fetch: 
+#     src: "/home/pi/.ssh/id_rsa.pub"
+#     dest: "group_vars/{{inventory_hostname}}-id_rsa.pub"
+#     flat: yes
 
-- name: Copy the key add to authorized_keys using Ansible module
-  authorized_key:
-    user: pi
-    state: present
-    key: "{{ lookup('file','group_vars/{{item}}-id_rsa.pub')}}"
-  when: "{{ item != inventory_hostname }}"
-  with_items: 
-    - "{{ groups['current'] }}"
+# - name: Copy the key add to authorized_keys using Ansible module
+#   authorized_key:
+#     user: pi
+#     state: present
+#     key: "{{ lookup('file','group_vars/{{item}}-id_rsa.pub')}}"
+#   when: "{{ item != inventory_hostname }}"
+#   with_items: 
+#     - "{{ groups['current'] }}"
 
-- name: Delete pub files from local
-  file:
-    path: "{{ item }}"
-    state: absent
-  with_fileglob:
-    - group_vars/*.pub
-  delegate_to: localhost
+# - name: Delete pub files from local
+#   file:
+#     path: "{{ item }}"
+#     state: absent
+#   with_fileglob:
+#     - group_vars/*.pub
+#   delegate_to: localhost
 
 - name: Backup original HPL.data
   copy:
@@ -169,6 +170,12 @@
   template:
     src: templates/HPL.dat.j2
     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.new"
+  become_user: pi
+
+- name: Add 3 node baseline HPL.dat as a new copy
+  template:
+    src: templates/HPL.dat.baseline.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.baseline"
   become_user: pi
 
 - name: Add nodes-Xpi
