@@ -127,14 +127,14 @@ ansible-playbook -i hosts -l 192.168.1.184 hp_linpack.yml
 ### Build on 4 nodes
 
 ```bash
-ansible-playbook -i hosts hp_linpack.yml --check
-ansible-playbook -i hosts hp_linpack.yml
+ansible-playbook -i hosts hp_linpack.yml --list-tasks --skip-tags atlas-repo
+ansible-playbook -i hosts hp_linpack.yml --skip-tags atlas-repo
 ```
 
 or, if already built on one Pi
 
 ```bash
-ansible-playbook -i hosts -l 'all:!192.168.1.184' hp_linpack.yml
+ansible-playbook -i hosts -l 'all:!192.168.1.184' hp_linpack.yml --skip-tags atlas-repo
 ```
 
 To reset performance mode:

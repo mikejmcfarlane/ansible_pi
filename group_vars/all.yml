@@ -6,14 +6,25 @@
 diskstation_ip: 192.168.1.191
 eeprom_working_dir: "/home/pi/tmp_pxe"
 
+# System performance
+cpu_voltage: 0
+cpu_frequency: 1500 
+
 # MPI
 mpi_working_dir: "/home/pi/tmp_mpi"
 mpi_download_url: "https://www.mpich.org/static/downloads/"
 mpi_file_version: "3.4a3"
 mpi_file_extension: ".tar.gz"
+# ch4 device is a newer communications protocol. In theory should have some advantages here, but takes a lot longer to build.
+# Switch to ch3 for a faster build but slower performance. ch3:sock does not run, so leave as ch3, which defaults to nemesis
+# Long running make jobs disconnect - verbose shows 'sftp transfer mechanism failed'. Maybe docker related?
+# So using async mode, will keep trying for 1200sec (20min) every 60s
+# mpi_device: ch4:ofi
+mpi_device: ch3:nemesis
 
 # ATLAS
 atlas_working_dir: "/home/pi/tmp_atlas"
+atlas_store_nfs_dir: "/nfs/rpi-nfs"
 
 # HPL
 hpl_working_dir: "/home/pi/tmp_hpl"
