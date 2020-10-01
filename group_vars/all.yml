@@ -26,6 +26,10 @@ mpi_device: ch3:nemesis
 atlas_working_dir: "/home/pi/tmp_atlas"
 atlas_store_nfs_dir: "/nfs/rpi-nfs"
 
+# OpenBLAS
+openblas_working_dir: "/home/pi/tmp_openblas"
+openblas_repo: https://github.com/xianyi/OpenBLAS.git
+
 # HPL
 hpl_working_dir: "/home/pi/tmp_hpl"
 hpl_download_url: "http://www.netlib.org/benchmark/hpl/"

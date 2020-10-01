@@ -1,7 +1,7 @@
 ---
 # tasks file for roles/hpl
 
-- name: Install MPI, ATLAS and required dependencies
+- name: INSTALL - Install MPI, ATLAS and required dependencies
   apt:
     pkg:
     - automake
@@ -9,7 +9,7 @@
     - git
     state: latest
 
-- name: Install MPI, ATLAS and required dependencies
+- name: ATLAS REPO - Install MPI, ATLAS and required dependencies
   apt:
     pkg:
     - libatlas-base-dev
@@ -17,7 +17,7 @@
   tags:
     - atlas-repo
 
-- name: Setup overclocking - cpu over_voltage
+- name: OVERCLOCK - Setup overclocking - cpu over_voltage
   lineinfile:
     path: /boot/config.txt
     regexp: "^over_voltage="
@@ -25,7 +25,7 @@
   tags:
   - overclock
 
-- name: Setup overclocking - cpu frequency
+- name: OVERCLOCK - Setup overclocking - cpu frequency
   lineinfile:
     path: /boot/config.txt
     regexp: "^arm_freq="
@@ -33,29 +33,29 @@
   tags:
   - overclock
 
-- name: Reboot to enable new clock speed
+- name: OVERCLOCK - Reboot to enable new clock speed
   reboot:
   tags:
   - overclock
 
-- name: Get clock speed
+- name: OVERCLOCK - Get clock speed
   command: vcgencmd measure_clock arm
   register: clock_speed
   tags:
   - overclock
 
-- name: Show clock speed
+- name: OVERCLOCK - Show clock speed
   debug:
     msg: "Clock speed {{ clock_speed.stdout }}"
   tags:
   - overclock
 
-- name: Disable CPU throttling - lasts until reboot, so needs to be after setting clock speed
+- name: CPU THROTTLING - Disable CPU throttling - lasts until reboot, so needs to be after setting clock speed
   shell: "echo performance | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
 
 # Using the repo MPI libs resulted in segmentation faults when running HPL.
 # So building MPI from source.
-- name: Make a working directly for MPI
+- name: MPI - Make a working directly for MPI
   file:
     name: "{{ mpi_working_dir }}"
     state: directory
@@ -65,14 +65,14 @@
   tags:
   - mpi
 
-- name: Get MPI source code
+- name: MPI - Get MPI source code
   get_url:
     url: "{{ mpi_download_url }}/{{ mpi_file_version }}/mpich-{{ mpi_file_version }}{{ mpi_file_extension }}"
     dest: "{{ mpi_working_dir }}"
   tags:
   - mpi
 
-- name: Untar MPI file
+- name: MPI - Untar MPI file
   unarchive:
     src: "{{ mpi_working_dir }}/mpich-{{ mpi_file_version }}{{ mpi_file_extension }}"
     dest: "{{ mpi_working_dir }}"
@@ -81,7 +81,7 @@
   tags:
   - mpi
 
-- name: Setup for MPI make
+- name: MPI - Setup for MPI make
   command: "./configure --with-device={{ mpi_device }}"
   args:
     chdir: "{{ mpi_working_dir }}/mpich-{{ mpi_file_version }}"
@@ -91,7 +91,7 @@
   tags:
   - mpi
 
-- name: Make MPI
+- name: MPI - Make MPI
   make:
     chdir: "{{ mpi_working_dir }}/mpich-{{ mpi_file_version }}"
     params:
@@ -102,7 +102,7 @@
   tags:
   - mpi
 
-- name: Make install MPI
+- name: MPI - Make install MPI
   make:
     chdir: "{{ mpi_working_dir }}/mpich-{{ mpi_file_version }}"
     target: install
@@ -113,7 +113,7 @@
 
 # The repo ATLAS works ok. If not working, or not performant, then build once, store centrally, 
 # and pull from a store e.g. github or a file/object store.
-- name: Get ATLAS pre-built - make directory for ATLAS
+- name: ATLAS BUILD - Get ATLAS pre-built - make directory for ATLAS
   file:
     name: "{{ atlas_working_dir }}"
     state: directory
@@ -123,7 +123,7 @@
   tags:
     - atlas-build
 
-- name: Make NFS mount point for ATLAS pre-built
+- name: ATLAS BUILD - Make NFS mount point for ATLAS pre-built
   file:
     path: "{{ atlas_store_nfs_dir }}"
     state: directory
@@ -131,7 +131,7 @@
   tags:
     - atlas-build
 
-- name: Mount NFS where pre-built ATLAS is stored
+- name: ATLAS BUILD - Mount NFS where pre-built ATLAS is stored
   mount:
     path: "{{ atlas_store_nfs_dir }}"
     src: "{{ diskstation_ip }}:/volume1/rpi-nfs/"
@@ -140,7 +140,7 @@
   tags:
     - atlas-build
 
-- name: Copy ATLAS pre-built from NFS store
+- name: ATLAS BUILD - Copy ATLAS pre-built from NFS store
   copy:
     src: "{{ atlas_store_nfs_dir }}/tmp_atlas/"
     dest: "/home/pi/tmp_atlas"
@@ -149,7 +149,43 @@
   tags:
     - atlas-build
 
-- name: Make a working directory for HPL
+
+
+
+- name: OPENBLAS - Make a working directory for OpenBLAS
+  file:
+    name: "{{ openblas_working_dir }}"
+    state: directory
+    mode: '0755'
+    owner: pi
+    group: pi
+  tags:
+  - openblas
+
+- name: OPENBLAS - Get OpenBLAS source code
+  git:
+    repo: "{{ openblas_repo }}"
+    dest: "{{ openblas_working_dir }}"
+  become_user: pi
+  tags:
+  - openblas
+
+- name: OPENBLAS - Make OpenBLAS
+  make:
+    chdir: "{{ openblas_working_dir }}"
+    params:
+      FC: gfortran
+  become_user: pi
+  async: 7200
+  poll: 60
+  tags:
+  - openblas
+
+
+
+
+
+- name: HPL - Make a working directory for HPL
   file:
     name: "{{ hpl_working_dir }}"
     state: directory
@@ -159,14 +195,14 @@
   tags:
   - hpl
 
-- name: Get HPL source code
+- name: HPL - Get HPL source code
   get_url:
     url: "{{ hpl_download_url }}{{ hpl_file_version }}{{ hpl_file_extension }}"
     dest: "{{ hpl_working_dir }}"
   tags:
   - hpl
 
-- name: Untar hpl file
+- name: HPL - Untar hpl file
   unarchive:
     src: "{{ hpl_working_dir }}/{{ hpl_file_version }}{{ hpl_file_extension }}"
     dest: "{{ hpl_working_dir }}"
@@ -175,15 +211,15 @@
   tags:
   - hpl
 
-- name: Setup for HPL make
-  command: "sh make_generic"
-  args:
-    chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}/setup"
-  become_user: pi
-  tags:
-  - hpl
+# - name: HPL - Setup for HPL make
+#   command: "sh make_generic"
+#   args:
+#     chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}/setup"
+#   become_user: pi
+#   tags:
+#   - hpl
 
-- name: Copy in Make.rpi - ATLAS from repo
+- name: HPL - Copy in Make.rpi - ATLAS from repo
   template:
     src: templates/Make.rpi.atlas-repo.j2
     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/Make.rpi"
@@ -192,27 +228,27 @@
   - hpl
   - atlas-repo
 
-- name: Copy in Make.rpi - ATLAS built from source
-  template:
-    src: templates/Make.rpi.atlas-build.j2
-    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/Make.rpi"
-  become_user: pi
-  tags:
-  - hpl
-  - atlas-build
+# - name: HPL - Copy in Make.rpi - ATLAS built from source
+#   template:
+#     src: templates/Make.rpi.atlas-build.j2
+#     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/Make.rpi"
+#   become_user: pi
+#   tags:
+#   - hpl
+#   - atlas-build
 
-- name: Make HPL
-  make:
-    chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}"
-    params:
-      arch: rpi
-  become_user: pi
-  async: 7200
-  poll: 60
-  tags:
-  - hpl
+# - name: HPL - Make HPL
+#   make:
+#     chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}"
+#     params:
+#       arch: rpi
+#   become_user: pi
+#   async: 7200
+#   poll: 60
+#   tags:
+#   - hpl
 
-- name: Add all nodes in cluster to trusted hosts
+- name: KEYS - Add all nodes in cluster to trusted hosts
   shell: "ssh-keyscan -H {{ item }} >> ~/.ssh/known_hosts"
   with_inventory_hostnames:
     - current
@@ -220,14 +256,14 @@
   tags:
   - ssh
 
-- name: Generate a new ssh key pair on each node
+- name: KEYS - Generate a new ssh key pair on each node
   openssh_keypair:
     path: /home/pi/.ssh/id_rsa
   become_user: pi
   tags:
   - ssh
 
-- name: Fetch the keyfile from the node to master
+- name: KEYS - Fetch the keyfile from the node to master
   fetch: 
     src: "/home/pi/.ssh/id_rsa.pub"
     dest: "group_vars/{{inventory_hostname}}-id_rsa.pub"
@@ -235,7 +271,7 @@
   tags:
   - ssh
 
-- name: Copy the key add to authorized_keys using Ansible module
+- name: KEYS - Copy the key add to authorized_keys using Ansible module
   authorized_key:
     user: pi
     state: present
@@ -246,7 +282,7 @@
   tags:
   - ssh
 
-- name: Delete pub files from local
+- name: KEYS - Delete pub files from local
   file:
     path: "{{ item }}"
     state: absent
@@ -256,41 +292,41 @@
   tags:
   - ssh
 
-- name: Backup original HPL.data
-  copy:
-    src: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat"
-    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.ori"
-    remote_src: yes
-  become_user: pi
-  tags:
-  - hpl
+# - name: HPL - Backup original HPL.data
+#   copy:
+#     src: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat"
+#     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.ori"
+#     remote_src: yes
+#   become_user: pi
+#   tags:
+#   - hpl
 
-- name: Add HPL.dat as a new copy
-  template:
-    src: templates/HPL.dat.j2
-    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.new"
-  become_user: pi
-  tags:
-  - hpl
+# - name: HPL - Add HPL.dat as a new copy
+#   template:
+#     src: templates/HPL.dat.j2
+#     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.new"
+#   become_user: pi
+#   tags:
+#   - hpl
 
-- name: Add 3 node baseline HPL.dat as a new copy
-  template:
-    src: templates/HPL.dat.baseline.j2
-    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.baseline"
-  become_user: pi
-  tags:
-  - hpl
+# - name: HPL - Add 3 node baseline HPL.dat as a new copy
+#   template:
+#     src: templates/HPL.dat.baseline.j2
+#     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.baseline"
+#   become_user: pi
+#   tags:
+#   - hpl
 
-- name: Add nodes-Xpi
-  vars:
-    node_list: "{{ groups['current'] }}"
-  template:
-    src: templates/nodes-Xpi.j2
-    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/nodes-Xpi"
-  become_user: pi
-  tags:
-  - hpl
-  - dat
+# - name: HPL - Add nodes-Xpi
+#   vars:
+#     node_list: "{{ groups['current'] }}"
+#   template:
+#     src: templates/nodes-Xpi.j2
+#     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/nodes-Xpi"
+#   become_user: pi
+#   tags:
+#   - hpl
+#   - dat
 
 - debug:
     msg: "To test 1 nodes cd {{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/; mpirun -np 4 ./xhpl"

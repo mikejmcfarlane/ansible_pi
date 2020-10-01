@@ -11,10 +11,10 @@ Assumes Ansible run in a docker container, along with other tools such as `nmap`
     - [Configure new Pi](#configure-new-pi)
   - [Setup PXE boot](#setup-pxe-boot)
     - [Pre-requisites](#pre-requisites)
-    - [Test on a single host](#test-on-a-single-host)
+    - [Test/run on a single host](#testrun-on-a-single-host)
     - [Run on all nodes](#run-on-all-nodes)
   - [High Performance Linpack](#high-performance-linpack)
-    - [Test on a single host](#test-on-a-single-host-1)
+    - [Test on a single host](#test-on-a-single-host)
     - [Build on 4 nodes](#build-on-4-nodes)
 
 ## Setup a new Pi
@@ -51,21 +51,22 @@ Add the host key to your local `known_hosts` file:
 ssh-keyscan -H <IP OF PI> >> ~/.ssh/known_hosts
 ```
 
-Add the IP, and a hostname, to the `hosts` inventory file in the `new` group, and test it:
+Add the IP, and a hostname, to the `hosts` inventory file in the `new` group, and test it (default pi password is `raspberry`):
 
 ```
-export ANSIBLE_HOST_KEY_CHECKING=False=False
-ansible -i new all -u pi -m ping --ask-pass
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible -i hosts new -u pi -m ping --ask-pass
 unset ANSIBLE_HOST_KEY_CHECKING
 ```
 
 
 ### Configure new Pi
 
+* Replace `<YOUR NEW PASSWORD>` *
+
 ```bash
 export NEW_PI_PASSWORD=$(python3 -c 'import crypt; print(crypt.crypt("<YOUR NEW PASSWORD>", crypt.mksalt(crypt.METHOD_SHA512)))')
-ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD" --list-hosts
-ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD" --check
+ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD" --list-tasks
 ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD"
 ```
 
@@ -86,17 +87,17 @@ Based on [PXE boot a Raspberry Pi 4 from a Synology Diskstation and compare perf
 + The `new_hostname` dir for each new Pi needs to exists on the Synology. And should be empty.
 + The `rpi-tftpboot` dir needs to exists on the Synology. And any previous Pi serial number dirs deleted.
 
-### Test on a single host
+### Test/run on a single host
 
 ```bash
-ansible-playbook -i hosts -l 192.168.1.184 pxe_boot_setup.yml --check
+ansible-playbook -i hosts -l 192.168.1.184 pxe_boot_setup.yml --list-tasks
 ansible-playbook -i hosts -l 192.168.1.184 pxe_boot_setup.yml
 ```
 
 ### Run on all nodes
 
 ```bash
-ansible-playbook -i hosts pxe_boot_setup.yml --list-hosts
+ansible-playbook -i hosts pxe_boot_setup.yml --list-tasks
 ansible-playbook -i hosts pxe_boot_setup.yml
 ```
 

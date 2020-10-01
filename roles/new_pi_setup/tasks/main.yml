@@ -22,7 +22,7 @@
   apt:
     pkg:
     - vim
-  state: latest
+    state: latest
 
 # - name: Set hostname, as defined in inventory var
 #   hostname:
