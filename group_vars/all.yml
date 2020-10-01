@@ -28,6 +28,7 @@ atlas_store_nfs_dir: "/nfs/rpi-nfs"
 
 # OpenBLAS
 openblas_working_dir: "/home/pi/tmp_openblas"
+openblas_install_dir: "/usr/local"
 openblas_repo: https://github.com/xianyi/OpenBLAS.git
 
 # HPL

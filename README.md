@@ -120,15 +120,17 @@ Based on [High Performance Linpack for my Raspberry Pi supercomputer](https://mi
 
 ### Test on a single host
 
+This example builds the HPL stack based on OpenBLAS, and skips the tasks for ATLAS and ssh (which will fail for a single node)
+
 ```bash
-ansible-playbook -i hosts -l 192.168.1.184 hp_linpack.yml --check
+ansible-playbook -i hosts -l 192.168.1.184 hp_linpack.yml --skip-tags atlas-repo,atlas-build,ssh --list-tasks
 ansible-playbook -i hosts -l 192.168.1.184 hp_linpack.yml
 ```
 
 ### Build on 4 nodes
 
 ```bash
-ansible-playbook -i hosts hp_linpack.yml --list-tasks --skip-tags atlas-repo
+ansible-playbook -i hosts hp_linpack.yml --skip-tags atlas-repo,atlas-build --list-tasks
 ansible-playbook -i hosts hp_linpack.yml --skip-tags atlas-repo
 ```
 

@@ -21,7 +21,7 @@
   lineinfile:
     path: /boot/config.txt
     regexp: "^over_voltage="
-    line: "arm_freq={{ cpu_voltage }}"
+    line: "over_voltage={{ cpu_voltage }}"
   tags:
   - overclock
 
@@ -149,9 +149,6 @@
   tags:
     - atlas-build
 
-
-
-
 - name: OPENBLAS - Make a working directory for OpenBLAS
   file:
     name: "{{ openblas_working_dir }}"
@@ -181,9 +178,16 @@
   tags:
   - openblas
 
-
-
-
+- name: OPENBLAS - Make install OpenBLAS
+  make:
+    chdir: "{{ openblas_working_dir }}"
+    params:
+      PREFIX: "{{ openblas_install_dir }}"
+    target: install
+  async: 3600
+  poll: 60
+  tags:
+  - openblas
 
 - name: HPL - Make a working directory for HPL
   file:
@@ -211,13 +215,13 @@
   tags:
   - hpl
 
-# - name: HPL - Setup for HPL make
-#   command: "sh make_generic"
-#   args:
-#     chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}/setup"
-#   become_user: pi
-#   tags:
-#   - hpl
+- name: HPL - Setup for HPL make
+  command: "sh make_generic"
+  args:
+    chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}/setup"
+  become_user: pi
+  tags:
+  - hpl
 
 - name: HPL - Copy in Make.rpi - ATLAS from repo
   template:
@@ -228,25 +232,34 @@
   - hpl
   - atlas-repo
 
-# - name: HPL - Copy in Make.rpi - ATLAS built from source
-#   template:
-#     src: templates/Make.rpi.atlas-build.j2
-#     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/Make.rpi"
-#   become_user: pi
-#   tags:
-#   - hpl
-#   - atlas-build
+- name: HPL - Copy in Make.rpi - ATLAS built from source
+  template:
+    src: templates/Make.rpi.atlas-build.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/Make.rpi"
+  become_user: pi
+  tags:
+  - hpl
+  - atlas-build
 
-# - name: HPL - Make HPL
-#   make:
-#     chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}"
-#     params:
-#       arch: rpi
-#   become_user: pi
-#   async: 7200
-#   poll: 60
-#   tags:
-#   - hpl
+- name: HPL - Copy in Make.rpi - OpenBLAS from source
+  template:
+    src: templates/Make.rpi.openblas.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/Make.rpi"
+  become_user: pi
+  tags:
+  - hpl
+  - openblas
+
+- name: HPL - Make HPL
+  make:
+    chdir: "{{ hpl_working_dir }}/{{ hpl_file_version }}"
+    params:
+      arch: rpi
+  become_user: pi
+  async: 7200
+  poll: 60
+  tags:
+  - hpl
 
 - name: KEYS - Add all nodes in cluster to trusted hosts
   shell: "ssh-keyscan -H {{ item }} >> ~/.ssh/known_hosts"
@@ -292,41 +305,41 @@
   tags:
   - ssh
 
-# - name: HPL - Backup original HPL.data
-#   copy:
-#     src: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat"
-#     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.ori"
-#     remote_src: yes
-#   become_user: pi
-#   tags:
-#   - hpl
+- name: HPL - Backup original HPL.data
+  copy:
+    src: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat"
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.ori"
+    remote_src: yes
+  become_user: pi
+  tags:
+  - hpl
 
-# - name: HPL - Add HPL.dat as a new copy
-#   template:
-#     src: templates/HPL.dat.j2
-#     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.new"
-#   become_user: pi
-#   tags:
-#   - hpl
+- name: HPL - Add HPL.dat as a new copy
+  template:
+    src: templates/HPL.dat.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.new"
+  become_user: pi
+  tags:
+  - hpl
 
-# - name: HPL - Add 3 node baseline HPL.dat as a new copy
-#   template:
-#     src: templates/HPL.dat.baseline.j2
-#     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.baseline"
-#   become_user: pi
-#   tags:
-#   - hpl
+- name: HPL - Add 3 node baseline HPL.dat as a new copy
+  template:
+    src: templates/HPL.dat.baseline.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.baseline"
+  become_user: pi
+  tags:
+  - hpl
 
-# - name: HPL - Add nodes-Xpi
-#   vars:
-#     node_list: "{{ groups['current'] }}"
-#   template:
-#     src: templates/nodes-Xpi.j2
-#     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/nodes-Xpi"
-#   become_user: pi
-#   tags:
-#   - hpl
-#   - dat
+- name: HPL - Add nodes-Xpi
+  vars:
+    node_list: "{{ groups['current'] }}"
+  template:
+    src: templates/nodes-Xpi.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/nodes-Xpi"
+  become_user: pi
+  tags:
+  - hpl
+  - dat
 
 - debug:
     msg: "To test 1 nodes cd {{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/; mpirun -np 4 ./xhpl"
