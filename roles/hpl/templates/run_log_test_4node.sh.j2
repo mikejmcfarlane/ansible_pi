@@ -1,0 +1,29 @@
+#!/bin/bash
+
+rm HPL.dat
+cp HPL.dat.4node HPL.dat
+
+touch test.log
+
+printf "\n\n\n\n" >> test.log
+printf "\nTEST START\n" >> test.log
+date >> test.log
+printf "\n\n" >> test.log
+cat HPL.dat >> test.log
+printf "\n\n\n\n" >> test.log
+
+while true; do
+  vcgencmd measure_clock arm >> test.log
+  vcgencmd measure_temp >> test.log
+  free >> test.log
+  uptime >> test.log
+  printf "\n" >> test.log
+  sleep 60
+done &
+
+printf "Start HPL"
+mpiexec -f nodes-Xpi ./xhpl
+printf "End HPL"
+kill %1
+
+printf "\nTEST END\n" >> test.log

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+rm HPL.dat
+cp HPL.dat.1node HPL.dat
+
+mpirun -np 4 ./xhpl
+
