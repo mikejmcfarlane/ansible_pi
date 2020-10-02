@@ -14,8 +14,10 @@ Assumes Ansible run in a docker container, along with other tools such as `nmap`
     - [Test/run on a single host](#testrun-on-a-single-host)
     - [Run on all nodes](#run-on-all-nodes)
   - [High Performance Linpack](#high-performance-linpack)
-    - [Test on a single host](#test-on-a-single-host)
+    - [Test build on a single host](#test-build-on-a-single-host)
     - [Build on 4 nodes](#build-on-4-nodes)
+    - [Run HPL tests](#run-hpl-tests)
+    - [Resets and clean ups](#resets-and-clean-ups)
 
 ## Setup a new Pi
 
@@ -118,7 +120,7 @@ Based on [High Performance Linpack for my Raspberry Pi supercomputer](https://mi
 
 *Some changes to the code will be required if not 4 nodes, requires more automation.*
 
-### Test on a single host
+### Test build on a single host
 
 This example builds the HPL stack based on OpenBLAS, and skips the tasks for ATLAS and ssh (which will fail for a single node)
 
@@ -131,17 +133,34 @@ ansible-playbook -i hosts -l 192.168.1.184 hp_linpack.yml
 
 ```bash
 ansible-playbook -i hosts hp_linpack.yml --skip-tags atlas-repo,atlas-build --list-tasks
-ansible-playbook -i hosts hp_linpack.yml --skip-tags atlas-repo
+ansible-playbook -i hosts hp_linpack.yml --skip-tags atlas-repo,atlas-build
 ```
 
 or, if already built on one Pi
 
 ```bash
-ansible-playbook -i hosts -l 'all:!192.168.1.184' hp_linpack.yml --skip-tags atlas-repo
+ansible-playbook -i hosts -l 'all:!192.168.1.184' hp_linpack.yml --skip-tags atlas-repo,atlas-build
 ```
 
-To reset performance mode:
+### Run HPL tests
+
+```bash
+cd ~/tmp_hpl/hpl-2.3/bin/rpi
+./run_log_test_1node.sh
+./run_log_test_4node.sh
+```
+
+### Resets and clean ups
+
+To reset performance mode after a restart:
 
 ```bash
 ansible -i hosts all -u pi -m shell -a "echo performance | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
+```
+
+To remove all built tools:
+
+```bash
+ansible -i hosts all -u pi --become -m shell -a "cd tmp_mpi/mpich-3.4a3/; sudo make arch=rpi uninstall; cd; rm -rf tmp_*"
+ansible -i hosts all -u pi --become -m shell -a "sudo shutdown -h now"
 ```

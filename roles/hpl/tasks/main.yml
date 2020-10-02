@@ -314,18 +314,36 @@
   tags:
   - hpl
 
-- name: HPL - Add HPL.dat as a new copy
+- name: HPL - Add 1 node HPL.dat as a new copy
   template:
-    src: templates/HPL.dat.j2
-    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.new"
+    src: templates/HPL.dat.1node.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.1node"
   become_user: pi
   tags:
   - hpl
 
-- name: HPL - Add 3 node baseline HPL.dat as a new copy
+- name: HPL - Add 4 node HPL.dat
   template:
-    src: templates/HPL.dat.baseline.j2
-    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.baseline"
+    src: templates/HPL.dat.4node.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/HPL.dat.4node"
+  become_user: pi
+  tags:
+  - hpl
+
+- name: HPL - Add script to run and log test on a single node
+  template:
+    src: templates/run_log_test_1node.sh.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/run_log_test_1node.sh"
+  mode: '0744'
+  become_user: pi
+  tags:
+  - hpl
+
+- name: HPL - Add script to run and log test on 4 nodes
+  template:
+    src: templates/run_log_test_4node.sh.j2
+    dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/run_log_test_4node.sh"
+  mode: '0744'
   become_user: pi
   tags:
   - hpl
@@ -342,10 +360,10 @@
   - dat
 
 - debug:
-    msg: "To test 1 nodes cd {{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/; mpirun -np 4 ./xhpl"
+    msg: "To test 1 nodes cd {{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/; ./run_log_test_1node.sh"
 
 - debug:
-    msg: "To run 4 nodes: cd {{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/; mpiexec -f nodes-Xpi ./xhpl"
+    msg: "To run 4 nodes: cd {{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/; ./run_log_test_4node.sh"
 
 - debug:
     msg: "If reboot/shutdown, then need to repeat disable CPU throttle"
