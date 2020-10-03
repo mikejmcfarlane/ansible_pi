@@ -334,7 +334,7 @@
   template:
     src: templates/run_log_test_1node.sh.j2
     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/run_log_test_1node.sh"
-  mode: '0744'
+    mode: '0744'
   become_user: pi
   tags:
   - hpl
@@ -343,7 +343,7 @@
   template:
     src: templates/run_log_test_4node.sh.j2
     dest: "{{ hpl_working_dir }}/{{ hpl_file_version }}/bin/rpi/run_log_test_4node.sh"
-  mode: '0744'
+    mode: '0744'
   become_user: pi
   tags:
   - hpl
