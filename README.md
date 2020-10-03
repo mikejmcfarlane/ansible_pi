@@ -5,7 +5,8 @@ Playbooks for managing a Raspberry Pi 4 cluster using Ansible.
 Assumes Ansible run in a docker container, along with other tools such as `nmap`.
 
 - [Ansible Pi](#ansible-pi)
-  - [Setup a new Pi](#setup-a-new-pi)
+  - [Setup a new Pi as ansible master node](#setup-a-new-pi-as-ansible-master-node)
+  - [Setup a new Pi for use in the cluster](#setup-a-new-pi-in-the-cluster)
     - [Create a microSD card with Raspbian - Mac](#create-a-microsd-card-with-raspbian---mac)
     - [Get the IP](#get-the-ip)
     - [Configure new Pi](#configure-new-pi)
@@ -18,8 +19,32 @@ Assumes Ansible run in a docker container, along with other tools such as `nmap`
     - [Build on 4 nodes](#build-on-4-nodes)
     - [Run HPL tests](#run-hpl-tests)
     - [Resets and clean ups](#resets-and-clean-ups)
+    
+## Setup a new Pi as ansible master node
 
-## Setup a new Pi
+[Install the latest Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-ansible-on-debian)
+
+Generate a new ssh key that will be used for the cluster and github (manually add public to GitHub)
+
+```bash
+ssh-keygen -t rsa -b 4096 -C "pi@cluster"
+
+```
+
+If using new master with an existing cluster, then copy the new key to all nodes:
+
+```bash
+ssh-keyscan -H <IP OF PIs in cluster> >> ~/.ssh/known_hosts
+ansible-playbook -i hosts new_pi_setup.yml --tags key-copy --ask-pass
+```
+
+And test Ansible can reach all cluster nodes:
+
+```bash
+ansible -i hosts all -u pi -m ping
+```
+
+## Setup a new Pi for use in the cluster
 
 ### Create a microSD card with Raspbian - Mac
 

@@ -6,6 +6,8 @@
     user: pi
     state: present
     key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+  tags:
+  - key-copy
 
 - name: Change password
   user:
