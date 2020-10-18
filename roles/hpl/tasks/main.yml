@@ -113,42 +113,42 @@
 
 # The repo ATLAS works ok. If not working, or not performant, then build once, store centrally, 
 # and pull from a store e.g. github or a file/object store.
-- name: ATLAS BUILD - Get ATLAS pre-built - make directory for ATLAS
-  file:
-    name: "{{ atlas_working_dir }}"
-    state: directory
-    mode: '0755'
-    owner: pi
-    group: pi
-  tags:
-    - atlas-build
-
-- name: ATLAS BUILD - Make NFS mount point for ATLAS pre-built
-  file:
-    path: "{{ atlas_store_nfs_dir }}"
-    state: directory
-    mode: '0775'
-  tags:
-    - atlas-build
-
-- name: ATLAS BUILD - Mount NFS where pre-built ATLAS is stored
-  mount:
-    path: "{{ atlas_store_nfs_dir }}"
-    src: "{{ diskstation_ip }}:/volume1/rpi-nfs/"
-    fstype: nfs
-    state: mounted
-  tags:
-    - atlas-build
-
-- name: ATLAS BUILD - Copy ATLAS pre-built from NFS store
-  copy:
-    src: "{{ atlas_store_nfs_dir }}/tmp_atlas/"
-    dest: "/home/pi/tmp_atlas"
-    remote_src: yes
-  become_user: pi
-  tags:
-    - atlas-build
-
+# - name: ATLAS BUILD - Get ATLAS pre-built - make directory for ATLAS
+#   file:
+#     name: "{{ atlas_working_dir }}"
+#     state: directory
+#     mode: '0755'
+#     owner: pi
+#     group: pi
+#   tags:
+#     - atlas-build
+# 
+# - name: ATLAS BUILD - Make NFS mount point for ATLAS pre-built
+#   file:
+#     path: "{{ atlas_store_nfs_dir }}"
+#     state: directory
+#     mode: '0775'
+#   tags:
+#     - nfs
+# 
+# - name: ATLAS BUILD - Mount NFS where pre-built ATLAS is stored
+#   mount:
+#     path: "{{ atlas_store_nfs_dir }}"
+#     src: "{{ diskstation_ip }}:/volume1/rpi-nfs/"
+#     fstype: nfs
+#     state: mounted
+#   tags:
+#     - nfs
+# 
+# - name: ATLAS BUILD - Copy ATLAS pre-built from NFS store
+#   copy:
+#     src: "{{ atlas_store_nfs_dir }}/tmp_atlas/"
+#     dest: "/home/pi/tmp_atlas"
+#     remote_src: yes
+#   become_user: pi
+#   tags:
+#     - atlas-build
+# 
 - name: OPENBLAS - Make a working directory for OpenBLAS
   file:
     name: "{{ openblas_working_dir }}"

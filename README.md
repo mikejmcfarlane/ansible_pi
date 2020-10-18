@@ -1,4 +1,4 @@
-# Ansible Pi
+      # Ansible Pi
 
 Playbooks for managing a Raspberry Pi 4 cluster using Ansible. 
 
@@ -44,11 +44,19 @@ And test Ansible can reach all cluster nodes:
 ansible -i hosts all -u pi -m ping
 ```
 
+Share an NFS mount:
+
+```bash
+vi /etc/fstab
+192.168.1.191:/volume1/rpi-nfs/ /nfs/rpi-nfs nfs defaults 0 0
+sudo mount -a
+```
+
 ## Setup a new Pi for use in the cluster
 
 ### Create a microSD card with Raspbian - Mac
 
-The starting point is a blank microSD card and the latest Raspbian minimal image. Also enables ssh access.
+The starting point is a blank microSD card and the latest Raspbian minimal image. Also enables ssh access. The new Pi needs to be connected via ethernet, not wifi which would require a direct login to the new Pi to do some initial config.
 
 [Copying an operating system image to an SD card using Mac OS](https://www.raspberrypi.org/documentation/installation/installing-images/mac.md)
 
@@ -59,6 +67,19 @@ cd ~/Downloads
 sudo dd bs=1m if=2020-08-20-raspios-buster-armhf-lite.img of=/dev/rdisk4; sync
 touch /Volumes/boot/ssh
 sudo diskutil eject /dev/rdisk4
+```
+
+Linux dd:
+
+```bash
+sudo mkdir -p /mnt/sda1
+sudo mkdir -p /mnt/sda2
+sudo mount /dev/sda1 /mnt/sda1
+sudo mount /dev/sda2 /mnt/sda2
+sudo dd bs=4M if=2020-08-20-raspios-buster-armhf-lite.img of=/dev/sda conv=fsync
+sudo touch /mnt/sda1/ssh
+sudo umount /mnt/sda1
+sudo umount /mnt/sda2
 ```
 
 Boot the Pi from the microSD card.
@@ -156,6 +177,8 @@ ansible-playbook -i hosts -l 192.168.1.184 hp_linpack.yml
 
 ### Build on 4 nodes
 
+Example builds OpenBLAS and ignores ATLAS build and ATLAS from repo.
+
 ```bash
 ansible-playbook -i hosts hp_linpack.yml --skip-tags atlas-repo,atlas-build --list-tasks
 ansible-playbook -i hosts hp_linpack.yml --skip-tags atlas-repo,atlas-build
@@ -185,7 +208,14 @@ ansible -i hosts all -u pi -m shell -a "echo performance | sudo tee /sys/devices
 
 To remove all built tools:
 
+Archive test log:
+
+```bash
+sudo mv test.log /nfs/rpi-nfs/test_logs/test.log.<EXPERIMENT>
+```
+
 ```bash
 ansible -i hosts all -u pi --become -m shell -a "cd tmp_mpi/mpich-3.4a3/; sudo make arch=rpi uninstall; cd; rm -rf tmp_*"
-ansible -i hosts all -u pi --become -m shell -a "sudo shutdown -h now"
+ansible -i hosts all -u pi --become -m shell -a "sudo apt -y remove libatlas-base-dev; sudo apt -y autoremove"
+ansible -i hosts all -u pi --become -m shell -a "sudo reboot"
 ```
