@@ -74,12 +74,10 @@ Linux dd:
 ```bash
 sudo mkdir -p /mnt/sda1
 sudo mkdir -p /mnt/sda2
-sudo mount /dev/sda1 /mnt/sda1
-sudo mount /dev/sda2 /mnt/sda2
 sudo dd bs=4M if=2020-08-20-raspios-buster-armhf-lite.img of=/dev/sda conv=fsync
+sudo mount /dev/sda1 /mnt/sda1
 sudo touch /mnt/sda1/ssh
 sudo umount /mnt/sda1
-sudo umount /mnt/sda2
 ```
 
 Boot the Pi from the microSD card.
@@ -113,7 +111,8 @@ unset ANSIBLE_HOST_KEY_CHECKING
 * Replace `<YOUR NEW PASSWORD>` *
 
 ```bash
-export NEW_PI_PASSWORD=$(python3 -c 'import crypt; print(crypt.crypt("<YOUR NEW PASSWORD>", crypt.mksalt(crypt.METHOD_SHA512)))')
+export YOUR_NEW_PASSWORD=<YOUR NEW PASSWORD>
+export NEW_PI_PASSWORD=$(python3 -c "import crypt; print(crypt.crypt('$YOUR_NEW_PASSWORD', crypt.mksalt(crypt.METHOD_SHA512)))")
 ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD" --list-tasks
 ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD"
 ```
