@@ -4,21 +4,20 @@ Playbooks for managing a Raspberry Pi 4 cluster using Ansible.
 
 Assumes Ansible run in a docker container, along with other tools such as `nmap`.
 
-- [Ansible Pi](#ansible-pi)
-  - [Setup a new Pi as ansible master node](#setup-a-new-pi-as-ansible-master-node)
-  - [Setup a new Pi for use in the cluster](#setup-a-new-pi-in-the-cluster)
-    - [Create a microSD card with Raspbian - Mac](#create-a-microsd-card-with-raspbian---mac)
-    - [Get the IP](#get-the-ip)
-    - [Configure new Pi](#configure-new-pi)
-  - [Setup PXE boot](#setup-pxe-boot)
-    - [Pre-requisites](#pre-requisites)
-    - [Test/run on a single host](#testrun-on-a-single-host)
-    - [Run on all nodes](#run-on-all-nodes)
-  - [High Performance Linpack](#high-performance-linpack)
-    - [Test build on a single host](#test-build-on-a-single-host)
-    - [Build on 4 nodes](#build-on-4-nodes)
-    - [Run HPL tests](#run-hpl-tests)
-    - [Resets and clean ups](#resets-and-clean-ups)
+- [Setup a new Pi as ansible master node](#setup-a-new-pi-as-ansible-master-node)
+- [Setup a new Pi for use in the cluster](#setup-a-new-pi-for-use-in-the-cluster)
+  - [Create a microSD card with Raspbian - Mac](#create-a-microsd-card-with-raspbian---mac)
+  - [Get the IP](#get-the-ip)
+  - [Configure new Pi](#configure-new-pi)
+- [Setup PXE boot](#setup-pxe-boot)
+  - [Pre-requisites](#pre-requisites)
+  - [Test/run on a single host](#testrun-on-a-single-host)
+  - [Run on all nodes](#run-on-all-nodes)
+- [High Performance Linpack](#high-performance-linpack)
+  - [Test build on a single host](#test-build-on-a-single-host)
+  - [Build on 4 nodes](#build-on-4-nodes)
+  - [Run HPL tests](#run-hpl-tests)
+  - [Resets and clean ups](#resets-and-clean-ups)
     
 ## Setup a new Pi as ansible master node
 
@@ -97,14 +96,17 @@ Add the host key to your local `known_hosts` file:
 ssh-keyscan -H <IP OF PI> >> ~/.ssh/known_hosts
 ```
 
-Add the IP, and a hostname, to the `hosts` inventory file in the `new` group, and test it (default pi password is `raspberry`):
+If on a Mac you need `sshpass` so either [install](https://gist.github.com/arunoda/7790979) with Homebrew, or build from source:
 
 ```
-export ANSIBLE_HOST_KEY_CHECKING=False
-ansible -i hosts new -u pi -m ping --ask-pass
-unset ANSIBLE_HOST_KEY_CHECKING
+cd ~/tmp/
+curl -O -L  https://sourceforge.net/projects/sshpass/files/sshpass/1.06/sshpass-1.06.tar.gz
+ls -la
+tar -xvzf sshpass-1.06.tar.gz
+cd sshpass-1.06
+./configure
+sudo make install
 ```
-
 
 ### Configure new Pi
 
@@ -117,7 +119,7 @@ ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_p
 ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD"
 ```
 
-In `hosts` file now move all IPs from `new` to `current`.
+In `hosts` file now move all IPs from `new` to `master` or `nodes`.
 
 And test reachable:
 
