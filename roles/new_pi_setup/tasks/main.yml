@@ -8,23 +8,30 @@
     key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
   tags:
   - key-copy
+  - new-pi
 
 - name: Change password
   user:
     name: pi
     password: "{{ new_pi_password }}"
     update_password: always
+  tags:
+  - new-pi
 
 - name: Update OS
   apt:
     name: "*"
     state: latest
+  tags:
+  - new-pi
 
 - name: Install any packages needed in all builds
   apt:
     pkg:
     - vim
     state: latest
+  tags:
+  - new-pi
 
 # - name: Set hostname, as defined in inventory var
 #   hostname:
@@ -36,8 +43,12 @@
     regexp: 'raspberrypi'
     line: "{{ new_hostname }}"
     state: present
+  tags:
+  - new-pi
 
 - name: Reboot
   reboot:
+  tags:
+  - new-pi
   
 

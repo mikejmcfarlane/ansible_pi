@@ -2,15 +2,13 @@
 
 
 [nodes]
-
-
-
-
-[new]
-10.0.4.21 new_hostname=ev3dev-pi03.local
 10.0.4.47 new_hostname=ev3dev-pi04.local
 10.0.4.70 new_hostname=ev3dev-pi05.local
 10.0.4.83 new_hostname=ev3dev-pi06.local
+
+[new]
+10.0.4.21 new_hostname=ev3dev-pi03.local
+
 
 [all:vars]
 ansible_connection=ssh

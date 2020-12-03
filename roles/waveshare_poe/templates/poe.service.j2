@@ -1,0 +1,10 @@
+[Unit]
+ Description=PoE display
+ After=multi-user.target
+
+ [Service]
+ Type=idle
+ ExecStart={{ waveshare_working_dir }}/PoE_HAT_B_code/c/main
+
+ [Install]
+ WantedBy=multi-user.target

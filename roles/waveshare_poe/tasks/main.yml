@@ -1,2 +1,195 @@
 ---
 # tasks file for waveshare_poe
+# source: https://www.waveshare.com/wiki/PoE_HAT_(B)
+
+- name: WAVESHARE - enable I2C boot.config
+  lineinfile:
+    path: /boot/config.txt
+    regexp: '^dtparam=i2c_arm='
+    line: dtparam=i2c_arm=on
+
+- name: WAVESHARE - enable I2C modules
+  lineinfile:
+    path: /etc/modules
+    line: "i2c-dev"
+    state: present
+  tags:
+  - waveshare
+
+- name: WAVESHARE - Install apt packages needed
+  apt:
+    pkg:
+    - wiringpi
+    - python3-pip
+    - python3-setuptools
+    - libopenjp2-7
+    - python3-libtiff
+    - libtiff5
+    - libatlas-base-dev
+    - p7zip-full
+    state: latest
+  tags:
+  - waveshare
+
+- name: WAVESHARE - Install pip packages needed
+  pip:
+    name:
+      - pillow
+      - numpy
+      - RPi.GPIO
+    executable: /usr/bin/pip3
+    extra_args: --user
+  tags:
+  - waveshare
+
+- name: WAVESHARE - make a tmp dir
+  file:
+    name: "{{ waveshare_working_dir }}"
+    state: directory
+    mode: '0770'
+  become_user: pi
+  tags:
+  - waveshare
+
+- name: WAVESHARE - get wiringpi
+  get_url:
+    url: https://project-downloads.drogon.net/wiringpi-latest.deb
+    dest: "{{ waveshare_working_dir }}"
+    mode: '0660'
+  become_user: pi
+  tags:
+  - waveshare
+
+- name: WAVESHARE - install wiringpi
+  apt:
+    deb: "{{ waveshare_working_dir }}/wiringpi-latest.deb"
+  tags:
+  - waveshare
+
+- name: WAVESHARE - get bcm2835
+  get_url:
+    url: http://www.airspayce.com/mikem/bcm2835/bcm2835-1.60.tar.gz
+    dest: "{{ waveshare_working_dir }}"
+    mode: '0660'
+  become_user: pi
+  tags:
+  - waveshare
+
+- name: WAVESHARE - untar bcm2835
+  unarchive:
+    src: "{{ waveshare_working_dir}}/bcm2835-1.60.tar.gz"
+    dest: "{{ waveshare_working_dir }}"
+    remote_src: yes
+  become_user: pi
+  tags:
+  - waveshare
+
+- name: WAVESHARE - bcm2835 configure
+  command: "./configure"
+  args:
+    chdir: "{{ waveshare_working_dir }}/bcm2835-1.60"
+  async: 1200
+  poll: 60
+  tags:
+  - waveshare
+
+- name: WAVESHARE - Make bcm2835
+  make:
+    chdir: "{{ waveshare_working_dir }}/bcm2835-1.60"
+    params:
+      NUM_THREADS: 4
+  async: 7200
+  poll: 60
+  tags:
+  - waveshare
+
+- name: WAVESHARE - Make check bcm2835
+  make:
+    chdir: "{{ waveshare_working_dir }}/bcm2835-1.60"
+    target: check
+  async: 3600
+  poll: 60
+  tags:
+  - waveshare
+
+- name: WAVESHARE - Make install bcm2835
+  make:
+    chdir: "{{ waveshare_working_dir }}/bcm2835-1.60"
+    target: install
+  async: 3600
+  poll: 60
+  tags:
+  - waveshare
+
+# Can get PoE code from source, but 7z command is unreliable and bad practise in Ansible
+# - name: WAVESHARE - get PoE HAT code
+#   get_url:
+#     url: https://www.waveshare.com/w/upload/b/b7/PoE_HAT_B_code.7z
+#     dest: "{{ waveshare_working_dir }}"
+#     mode: '0660'
+#   become_user: pi
+#   tags:
+#   - waveshare
+
+# - name: WAVESHARE - 7z PoE HAT code
+#   command: "7z x PoE_HAT_B_code.7z -r -o./PoE_HAT_B_code"
+#   args:
+#     chdir: "{{ waveshare_working_dir }}"
+#   become_user: pi
+#   tags:
+#   - waveshare
+
+- name: WAVESHARE - copy PoE HAT code to node
+  copy:
+    src: files/PoE_HAT_B_code.zip
+    dest: "{{ waveshare_working_dir}}/PoE_HAT_B_code.zip"
+    owner: pi
+    group: pi
+    mode: '0664'
+  tags:
+  - waveshare
+
+- name: WAVESHARE - unzip PoE HAT code
+  unarchive:
+    src: "{{ waveshare_working_dir}}/PoE_HAT_B_code.zip"
+    dest: "{{ waveshare_working_dir }}"
+    remote_src: yes
+  become_user: pi
+  tags:
+  - waveshare
+
+- name: WAVESHARE - Make clean PoE HAT code
+  make:
+    chdir: "{{ waveshare_working_dir }}/PoE_HAT_B_code/c/"
+    target: clean
+  tags:
+  - waveshare
+
+- name: WAVESHARE - Make PoE HAT code
+  make:
+    chdir: "{{ waveshare_working_dir }}/PoE_HAT_B_code/c/"
+    params:
+      NUM_THREADS: 4
+  tags:
+  - waveshare
+
+# vi /etc/rc.local
+# # insert before exit
+# /home/pi/PoE_HAT_B_code/c/main &
+
+- name: WAVESHARE - add to systemd dir
+  template:
+    src: templates/poe.service.j2
+    dest: /lib/systemd/system/poe.service
+    mode: 0644
+  tags:
+  - waveshare
+
+- name: WAVESHARE - start and enable poe service
+  systemd:
+    name: poe
+    state: started
+    enabled: yes
+
+- name: WAVESHARE - reboot
+  reboot:

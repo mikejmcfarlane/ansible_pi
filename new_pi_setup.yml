@@ -7,3 +7,5 @@
   become: yes
   roles:
     - new_pi_setup
+    - waveshare_poe
+    # - blinkt
