@@ -121,24 +121,6 @@
   tags:
   - waveshare
 
-# Can get PoE code from source, but 7z command is unreliable and bad practise in Ansible
-# - name: WAVESHARE - get PoE HAT code
-#   get_url:
-#     url: https://www.waveshare.com/w/upload/b/b7/PoE_HAT_B_code.7z
-#     dest: "{{ waveshare_working_dir }}"
-#     mode: '0660'
-#   become_user: pi
-#   tags:
-#   - waveshare
-
-# - name: WAVESHARE - 7z PoE HAT code
-#   command: "7z x PoE_HAT_B_code.7z -r -o./PoE_HAT_B_code"
-#   args:
-#     chdir: "{{ waveshare_working_dir }}"
-#   become_user: pi
-#   tags:
-#   - waveshare
-
 - name: WAVESHARE - copy PoE HAT code to node
   copy:
     src: files/PoE_HAT_B_code.zip
@@ -172,10 +154,6 @@
       NUM_THREADS: 4
   tags:
   - waveshare
-
-# vi /etc/rc.local
-# # insert before exit
-# /home/pi/PoE_HAT_B_code/c/main &
 
 - name: WAVESHARE - add to systemd dir
   template:
