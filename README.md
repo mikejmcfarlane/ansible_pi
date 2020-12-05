@@ -9,6 +9,8 @@ Assumes Ansible run in a docker container, along with other tools such as `nmap`
   - [Create a microSD card with Raspbian - macOS or linux](#create-a-microsd-card-with-raspbian---macos-or-linux)
   - [Get the IP](#get-the-ip)
   - [Configure new Pi](#configure-new-pi)
+- [Waveshare PoE](#waveshare-poe)
+- [Blinkt LED](#blinkt-led)
 - [Setup PXE boot](#setup-pxe-boot)
   - [Pre-requisites](#pre-requisites)
   - [Test/run on a single host](#testrun-on-a-single-host)
@@ -125,6 +127,20 @@ And test reachable:
 
 ```bash
 ansible -i hosts all -u pi -m ping
+```
+
+## Waveshare PoE
+
+Installed as part of new_pi_setup playbook. Skip tags to not install. After a reboot the HAT led should show info.
+
+## Blinkt LED
+
+Installed as part of new_pi_setup.
+
+To test after the playbook finishes:
+
+```
+ansible -i hosts all -u pi -m shell -a "cd ~/tmp; timeout 10s ./blinkt_rainbow.py; echo''"
 ```
 
 ## Setup PXE boot
