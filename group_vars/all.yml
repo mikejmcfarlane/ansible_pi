@@ -39,3 +39,6 @@ hpl_file_extension: ".tar.gz"
 
 # WAVESHARE
 waveshare_working_dir: "/home/pi/tmp"
+
+# BLINKT
+blinkt_working_dir: "/home/pi/tmp"

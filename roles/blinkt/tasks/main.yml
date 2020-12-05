@@ -1,2 +1,42 @@
 ---
 # tasks file for blinkt
+
+# - name: BLINKT - install from bash script
+#   script: files/blinkt.sh
+#   become_user: pi
+#   tags:
+#   - blinkt
+
+
+- name: BLINKT - install blinkt from apt
+  apt:
+    pkg:
+    - python3-blinkt
+    state: latest
+  tags:
+  - blinkt
+
+- name: BLINKT - make a tmp dir
+  file:
+    name: "{{ blinkt_working_dir }}"
+    state: directory
+    mode: '0770'
+  become_user: pi
+  tags:
+  - blinkt
+
+- name: BLINKT - add sample code
+  copy:
+    src: files/blinkt_rainbow.py
+    dest: "{{ blinkt_working_dir }}/blinkt_rainbow.py"
+    owner: pi
+    group: pi
+    mode: '0774'
+  become_user: pi
+  tags:
+  - blinkt
+
+- name: BLINKT - reboot
+  reboot:
+  tags:
+  - blinkt

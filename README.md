@@ -6,7 +6,7 @@ Assumes Ansible run in a docker container, along with other tools such as `nmap`
 
 - [Setup a new Pi as ansible master node](#setup-a-new-pi-as-ansible-master-node)
 - [Setup a new Pi for use in the cluster](#setup-a-new-pi-for-use-in-the-cluster)
-  - [Create a microSD card with Raspbian - Mac](#create-a-microsd-card-with-raspbian---mac)
+  - [Create a microSD card with Raspbian - macOS or linux](#create-a-microsd-card-with-raspbian---macos-or-linux)
   - [Get the IP](#get-the-ip)
   - [Configure new Pi](#configure-new-pi)
 - [Setup PXE boot](#setup-pxe-boot)
@@ -53,7 +53,7 @@ sudo mount -a
 
 ## Setup a new Pi for use in the cluster
 
-### Create a microSD card with Raspbian - Mac
+### Create a microSD card with Raspbian - macOS or linux
 
 The starting point is a blank microSD card and the latest Raspbian minimal image. Also enables ssh access. The new Pi needs to be connected via ethernet, not wifi which would require a direct login to the new Pi to do some initial config.
 
@@ -115,7 +115,7 @@ sudo make install
 ```bash
 export YOUR_NEW_PASSWORD=<YOUR NEW PASSWORD>
 export NEW_PI_PASSWORD=$(python3 -c "import crypt; print(crypt.crypt('$YOUR_NEW_PASSWORD', crypt.mksalt(crypt.METHOD_SHA512)))")
-ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD" --list-tasks
+**ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD" --list-tasks**
 ansible-playbook -i hosts -l new new_pi_setup.yml --ask-pass --extra-vars "new_pi_password=$NEW_PI_PASSWORD"
 ```
 

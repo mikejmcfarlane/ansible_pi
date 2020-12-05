@@ -20,10 +20,17 @@
 
 - name: Update OS
   apt:
-    name: "*"
-    state: latest
+    update_cache: yes
+    upgrade: 'yes'
   tags:
   - new-pi
+
+# - name: Upgraded OS
+#   apt:
+#     name: "*"
+#     state: latest
+#   tags:
+#   - new-pi
 
 - name: Install any packages needed in all builds
   apt:
